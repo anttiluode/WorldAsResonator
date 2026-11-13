@@ -67,10 +67,12 @@ def analyse(R, perms=20000, rng=np.random.default_rng(0)):
 
 
 def pair_index(R, a, b, songs=SONGS):
+    """2x2 log gap: log(A:a * B:b / (A:b * B:a)). > 0 = each world prefers its own song.
+    (An earlier version normalised raw energies by their sum; that let a loud song
+    swamp a quiet one, e.g. low96 vs high96 differ ~100x on some seeds. Replaced.)"""
     i, j = songs.index(a), songs.index(b)
     G = R[1:]
-    aa, bb, ab, ba = G[i, i], G[j, j], G[i, j], G[j, i]
-    return float((aa + bb - ab - ba) / np.mean([aa, bb, ab, ba]))
+    return float(np.log(G[i, i] * G[j, j] / (G[i, j] * G[j, i])))
 
 
 if __name__ == '__main__':

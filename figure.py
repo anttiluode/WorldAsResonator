@@ -36,8 +36,12 @@ def main(a, b, seed):
 
     def emap(state, song):
         w.reset(); w.write('geo', state[0]); w.write('mat', state[1]); w.clear_forces()
-        F = w.play(S[song]['rows'], PROBE_TICKS, matter_mode=FREEZE, measure_every=4, skip=SKIP)
-        return np.mean([(f[..., 0] ** 2 + f[..., 1] ** 2) for f in F], axis=0)
+        rows, acc, k = S[song]['rows'], np.zeros((w.n, w.n)), 0
+        for t in range(PROBE_TICKS):   # running sum: keeping every sampled field ran out of memory
+            w.step(rows[(t // 4) % len(rows)], matter_mode=FREEZE)
+            if t >= SKIP and t % 4 == 0:
+                f = w.read('force'); acc += f[..., 0] ** 2 + f[..., 1] ** 2; k += 1
+        return acc / k
 
     E = {(x, y): emap(grown[x], y) for x in (a, b) for y in (a, b)}
     tune = (E[a, a] - E[b, a]) - (E[a, b] - E[b, b])

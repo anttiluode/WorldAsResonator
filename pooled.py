@@ -15,7 +15,12 @@ null = np.array([np.mean([L[np.arange(k), rng.permutation(k)].mean() for L in Ls
 p_two = float((np.sum(np.abs(null) >= abs(obs)) + 1) / (len(null) + 1))
 # per-song diagonal across seeds: which songs make worlds that ring less / more for themselves
 per_song = {s: [float(L[i, i]) for L in Ls] for i, s in enumerate(songs)}
-pairs = {p: [d['seeds'][s]['pairs'][p] for s in seeds] for p in d['seeds'][seeds[0]]['pairs']}
+from tuning import pair_index
+PAIRS = [('march80', 'march116'), ('low96', 'high96'), ('straight100', 'broken100'), ('weather0', 'weather1')]
+pairs = {f'{a}|{b}': [pair_index(np.array(d['seeds'][s]['R']), a, b, songs) for s in seeds] for a, b in PAIRS}
+for s in seeds:  # keep stored per-seed pair values consistent with the corrected index
+    d['seeds'][s]['pairs'] = {k: v[seeds.index(s)] for k, v in pairs.items()}
+(ROOT / 'results' / 'tuning.json').write_text(json.dumps(d, indent=1))
 # overall effect of growth: gain of grown world vs ungrown, averaged over all songs
 gains = {s: float(np.mean(np.array(d['seeds'][s]['R'])[1:] / np.array(d['seeds'][s]['R'])[0])) for s in seeds}
 # how much of the total variation is the diagonal: spread of log gain across worlds for a fixed song
